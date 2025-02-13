@@ -142,6 +142,7 @@ final class CardPresentPaymentService: CardPresentPaymentFacade {
             for: order,
             using: connectionMethod,
             siteID: siteID,
+            // Preflightcontroller includes analytics tracker internally, but it's the one tracking card reader events only
             preflightController: preflightController,
             onboardingPresenter: onboardingAdaptor,
             configuration: cardPresentPaymentsConfiguration,
@@ -208,6 +209,8 @@ private extension CardPresentPaymentService {
         CardPresentPaymentBluetoothReaderConnectionAlertsProvider,
         CardPresentPaymentsAlertPresenterAdaptor> {
             let alertProvider = CardPresentPaymentBuiltInReaderConnectionAlertsProvider()
+            let cardReaderConnectionAnalyticsTracker = connectionControllerManager.analyticsTracker
+
             return CardPresentPaymentPreflightController(
                 siteID: siteID,
                 configuration: cardPresentPaymentsConfiguration,
@@ -220,7 +223,7 @@ private extension CardPresentPaymentService {
                 tapToPayReconnectionController: TapToPayReconnectionController(
                     connectionControllerFactory: BuiltInCardReaderConnectionControllerFactory(
                         alertProvider: alertProvider)),
-                analyticsTracker: connectionControllerManager.analyticsTracker)
+                analyticsTracker: cardReaderConnectionAnalyticsTracker)
         }
 }
 

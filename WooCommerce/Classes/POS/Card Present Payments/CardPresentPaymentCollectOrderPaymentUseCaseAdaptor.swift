@@ -39,6 +39,15 @@ final class CardPresentPaymentCollectOrderPaymentUseCaseAdaptor {
 
             let invalidatablePaymentOrchestrator = CardPresentPaymentInvalidatablePaymentOrchestrator()
 
+            // This adaptor declares CollectOrderPaymentAnalyticsTracking internally, so we can switch the implementation detail
+            // when the channel is POS:
+            var collectOrderPaymentAnalyticsTracker: CollectOrderPaymentAnalyticsTracking?
+            if channel == .pos {
+                collectOrderPaymentAnalyticsTracker = POSCollectOrderPaymentAnalytics()
+            } else {
+                // For IPP, it's setup internally, so need to be passed through the adaptor
+                collectOrderPaymentAnalyticsTracker = nil
+            }
             let orderPaymentUseCase = CollectOrderPaymentUseCase<CardPresentPaymentsTransactionAlertsProvider,
                                                                  CardPresentPaymentsTransactionAlertsProvider,
                                                                     CardPresentPaymentsAlertPresenterAdaptor>(
@@ -51,7 +60,8 @@ final class CardPresentPaymentCollectOrderPaymentUseCaseAdaptor {
                 alertsPresenter: alertsPresenter,
                 tapToPayAlertsProvider: CardPresentPaymentsTransactionAlertsProvider(),
                 bluetoothAlertsProvider: CardPresentPaymentsTransactionAlertsProvider(),
-                preflightController: preflightController)
+                preflightController: preflightController,
+                analyticsTracker: collectOrderPaymentAnalyticsTracker)
 
             return try await withTaskCancellationHandler {
                 return try await withCheckedThrowingContinuation { continuation in

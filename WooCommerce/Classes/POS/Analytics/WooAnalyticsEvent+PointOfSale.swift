@@ -31,6 +31,11 @@ extension WooAnalyticsEvent {
             WooAnalyticsEvent(statName: .pointOfSaleCheckoutTapped,
                               properties: [Key.itemsInCart: itemsInCart])
         }
+
+        static func cardPresentCollectPaymentSuccess() -> WooAnalyticsEvent {
+            WooAnalyticsEvent(statName: .collectPaymentSuccess,
+                              properties: ["some_pos_key": "some_pos_value"])
+        }
     }
 }
 
