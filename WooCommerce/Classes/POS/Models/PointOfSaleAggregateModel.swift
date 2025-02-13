@@ -68,16 +68,20 @@ protocol PointOfSaleAggregateModelProtocol {
 
     private var cancellables: Set<AnyCancellable> = []
 
+    private let collectOrderPaymentAnalyticsTracker: CollectOrderPaymentAnalyticsTracking
+
     init(itemsController: PointOfSaleItemsControllerProtocol,
          cardPresentPaymentService: CardPresentPaymentFacade,
          orderController: PointOfSaleOrderControllerProtocol,
          analytics: Analytics = ServiceLocator.analytics,
-         paymentState: PointOfSalePaymentState = .card(.idle)) {
+         paymentState: PointOfSalePaymentState = .card(.idle),
+         collectOrderPaymentAnalyticsTracker: CollectOrderPaymentAnalyticsTracking = POSCollectOrderPaymentAnalytics()) {
         self.itemsController = itemsController
         self.cardPresentPaymentService = cardPresentPaymentService
         self.orderController = orderController
         self.analytics = analytics
         self.paymentState = paymentState
+        self.collectOrderPaymentAnalyticsTracker = collectOrderPaymentAnalyticsTracker
         publishCardReaderConnectionStatus()
         publishPaymentMessages()
         setupReaderReconnectionObservation()
@@ -121,6 +125,8 @@ private extension POSItem {
 @available(iOS 17.0, *)
 extension PointOfSaleAggregateModel {
     func addToCart(_ item: POSItem) {
+        trackStartTime()
+
         guard let cartItem = item.cartItem else { return }
         cart.insert(cartItem, at: cart.startIndex)
     }
@@ -148,6 +154,10 @@ extension PointOfSaleAggregateModel {
         orderStage = .building
         paymentState = .card(.idle)
         cardPresentPaymentInlineMessage = nil
+    }
+
+    private func trackStartTime() {
+        collectOrderPaymentAnalyticsTracker.trackCustomerInteractionStarted(Date().timeIntervalSince1970)
     }
 }
 

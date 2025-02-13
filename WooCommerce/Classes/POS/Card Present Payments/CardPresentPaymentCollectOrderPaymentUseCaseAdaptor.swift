@@ -11,12 +11,15 @@ final class CardPresentPaymentCollectOrderPaymentUseCaseAdaptor {
     private let currencyFormatter: CurrencyFormatter
     @Published private var latestPaymentEvent: CardPresentPaymentEvent = .idle
     private let stores: StoresManager
+    private let collectOrderPaymentAnalyticsTracker: CollectOrderPaymentAnalyticsTracking
 
     init(currencyFormatter: CurrencyFormatter = .init(currencySettings: ServiceLocator.currencySettings),
          paymentEventPublisher: AnyPublisher<CardPresentPaymentEvent, Never>,
-         stores: StoresManager = ServiceLocator.stores) {
+         stores: StoresManager = ServiceLocator.stores,
+         collectOrderPaymentAnalyticsTracker: CollectOrderPaymentAnalyticsTracking) {
         self.currencyFormatter = currencyFormatter
         self.stores = stores
+        self.collectOrderPaymentAnalyticsTracker = collectOrderPaymentAnalyticsTracker
         paymentEventPublisher.assign(to: &$latestPaymentEvent)
     }
 
@@ -42,14 +45,14 @@ final class CardPresentPaymentCollectOrderPaymentUseCaseAdaptor {
 
             // This adaptor declares CollectOrderPaymentAnalyticsTracking internally, so we can switch the implementation detail
             // when the channel is POS:
-            var collectOrderPaymentAnalyticsTracker: CollectOrderPaymentAnalyticsTracking?
-            if channel == .pos {
-                // This is created on card reader connection, so we cannot pass event data from when we collect the payment
-                collectOrderPaymentAnalyticsTracker = POSCollectOrderPaymentAnalytics()
-            } else {
-                // For IPP, it's setup internally, so need to be passed through the adaptor
-                collectOrderPaymentAnalyticsTracker = nil
-            }
+//            var collectOrderPaymentAnalyticsTracker: CollectOrderPaymentAnalyticsTracking?
+//            if channel == .pos {
+//                // This is created on card reader connection, so we cannot pass event data from when we collect the payment
+//                collectOrderPaymentAnalyticsTracker = POSCollectOrderPaymentAnalytics()
+//            } else {
+//                // For IPP, it's setup internally, so need to be passed through the adaptor
+//                collectOrderPaymentAnalyticsTracker = nil
+//            }
             let orderPaymentUseCase = CollectOrderPaymentUseCase<CardPresentPaymentsTransactionAlertsProvider,
                                                                  CardPresentPaymentsTransactionAlertsProvider,
                                                                     CardPresentPaymentsAlertPresenterAdaptor>(

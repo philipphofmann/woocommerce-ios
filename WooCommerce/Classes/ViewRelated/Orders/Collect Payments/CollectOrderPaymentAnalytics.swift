@@ -24,10 +24,18 @@ protocol CollectOrderPaymentAnalyticsTracking {
     func trackReceiptPrintCanceled()
 
     func trackReceiptPrintFailed(error: Error)
+
+    func trackCustomerInteractionStarted(_ timeIntervalSince1970: Double)
+}
+
+extension CollectOrderPaymentAnalyticsTracking {
+    func trackCustomerInteractionStarted(_ timeIntervalSince1970: Double) {}
 }
 
 final class POSCollectOrderPaymentAnalytics: CollectOrderPaymentAnalyticsTracking {
     var connectedReaderModel: String?
+
+    private var customerInteractionStarted: Double = 0
 
     func preflightResultReceived(_ result: CardReaderPreflightResult?) {
 
@@ -44,7 +52,7 @@ final class POSCollectOrderPaymentAnalytics: CollectOrderPaymentAnalyticsTrackin
         // Just for testing: We should see a value for milliseconds_since_customer_interaction_started, and empty values for the rest.
         // if we see key_not_found, then properties are not being passed from POS.
         ServiceLocator.analytics.track(event: WooAnalyticsEvent.PointOfSale.cardPresentCollectPaymentSuccess(
-            milliseconds_since_customer_interaction_started: parsedValue,
+            milliseconds_since_customer_interaction_started: "\(Date().timeIntervalSince1970 - customerInteractionStarted)",
             milliseconds_since_order_creation_success: "",
             milliseconds_since_reader_ready_to_collect_payment: "",
             milliseconds_since_card_tapped: "",
@@ -77,6 +85,10 @@ final class POSCollectOrderPaymentAnalytics: CollectOrderPaymentAnalyticsTrackin
 
     func trackReceiptPrintFailed(error: any Error) {
 
+    }
+
+    func trackCustomerInteractionStarted(_ timeIntervalSince1970: Double) {
+        customerInteractionStarted = timeIntervalSince1970
     }
 }
 
