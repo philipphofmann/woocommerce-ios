@@ -270,6 +270,7 @@ final class PaymentMethodsViewModel: ObservableObject {
         collectPaymentsUseCase?.collectPayment(
             using: discoveryMethod,
             channel: channel,
+            eventData: [:], 
             onFailure: { [weak self] error in
                 guard let self else { return }
 

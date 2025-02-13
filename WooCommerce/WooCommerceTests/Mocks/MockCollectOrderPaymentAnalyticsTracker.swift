@@ -15,7 +15,7 @@ final class MockCollectOrderPaymentAnalyticsTracker: CollectOrderPaymentAnalytic
 
     var didCallTrackSuccessfulPayment = false
     var spyTrackSuccessfulPaymentCapturedPaymentData: CardPresentCapturedPaymentData? = nil
-    func trackSuccessfulPayment(capturedPaymentData: CardPresentCapturedPaymentData) {
+    func trackSuccessfulPayment(capturedPaymentData: CardPresentCapturedPaymentData, eventData: [String: String]) {
         didCallTrackSuccessfulPayment = true
         spyTrackSuccessfulPaymentCapturedPaymentData = capturedPaymentData
     }

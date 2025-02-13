@@ -22,6 +22,7 @@ protocol CollectOrderPaymentProtocol {
     /// - Parameter onPaymentCompletion: Closure invoked after any payment completes, but while the user can still continue with the flow in some way
     func collectPayment(using: CardReaderDiscoveryMethod,
                         channel: PaymentChannel,
+                        eventData: [String: String],
                         onFailure: @escaping (Error) -> Void,
                         onCancel: @escaping () -> Void,
                         onPaymentCompletion: @escaping () -> Void,
@@ -142,6 +143,7 @@ where BuiltInAlertProvider.AlertDetails == AlertPresenter.AlertDetails,
     /// - Parameter onCompleted: Closure invoked after the flow has been totally completed, currently after merchant has handled the receipt.
     func collectPayment(using discoveryMethod: CardReaderDiscoveryMethod,
                         channel: PaymentChannel,
+                        eventData: [String: String],
                         onFailure: @escaping (Error) -> Void,
                         onCancel: @escaping () -> Void,
                         onPaymentCompletion: @escaping () -> Void,
@@ -155,6 +157,7 @@ where BuiltInAlertProvider.AlertDetails == AlertPresenter.AlertDetails,
                 self.attemptPayment(alertProvider: paymentAlertProvider,
                                     paymentGatewayAccount: paymentGatewayAccount,
                                     channel: channel,
+                                    eventData: eventData, // Problem: eventData contains 0 elements at this point, so no properties are tracked.
                                     onCompletion: { [weak self] result in
                     guard let self = self else { return }
                     // Inform about the collect payment state
@@ -291,6 +294,7 @@ private extension CollectOrderPaymentUseCase {
     func attemptPayment(alertProvider paymentAlerts: any CardReaderTransactionAlertsProviding<AlertPresenter.AlertDetails>,
                         paymentGatewayAccount: PaymentGatewayAccount,
                         channel: PaymentChannel,
+                        eventData: [String: String],
                         onCompletion: @escaping (Result<CardPresentCapturedPaymentData, Error>) -> ()) {
         checkOrderIsStillEligibleForPayment(alertProvider: paymentAlerts, onPaymentCompletion: onCompletion) { [weak self] result in
             guard let self = self else { return }
@@ -353,7 +357,14 @@ private extension CollectOrderPaymentUseCase {
                     }, onCompletion: { [weak self] result in
                         switch result {
                         case .success(let capturedPaymentData):
-                            self?.handleSuccessfulPayment(capturedPaymentData: capturedPaymentData)
+                            // We need to pass the event data from above/outside when channel is POS
+                            var posEventData: [String: String]
+                            if channel == .pos {
+                                posEventData = eventData
+                            } else {
+                                posEventData = ["just_for_testing": "attemptPayment"]
+                            }
+                            self?.handleSuccessfulPayment(capturedPaymentData: capturedPaymentData, eventData: posEventData)
                             onCompletion(.success(capturedPaymentData))
                         case .failure(CardReaderServiceError.paymentMethodCollection(.commandCancelled(let cancellationSource))):
                             switch cancellationSource {
@@ -376,8 +387,8 @@ private extension CollectOrderPaymentUseCase {
 
     /// Tracks the successful payments
     ///
-    func handleSuccessfulPayment(capturedPaymentData: CardPresentCapturedPaymentData) {
-        analyticsTracker.trackSuccessfulPayment(capturedPaymentData: capturedPaymentData)
+    func handleSuccessfulPayment(capturedPaymentData: CardPresentCapturedPaymentData, eventData: [String: String]) {
+        analyticsTracker.trackSuccessfulPayment(capturedPaymentData: capturedPaymentData, eventData: eventData)
     }
 
     func handlePaymentCancellation(from cancellationSource: WooAnalyticsEvent.InPersonPayments.CancellationSource) {
@@ -498,6 +509,7 @@ private extension CollectOrderPaymentUseCase {
                                                        self.attemptPayment(alertProvider: paymentAlerts,
                                                                            paymentGatewayAccount: paymentGatewayAccount,
                                                                            channel: channel,
+                                                                           eventData: [:],
                                                                            onCompletion: onCompletion)
                                                    case .failure(let cancelError):
                                                        // Inform that payment can't be retried.
@@ -539,7 +551,8 @@ private extension CollectOrderPaymentUseCase {
                                 guard let self = self else { return }
                                 switch result {
                                 case .success(let capturedPaymentData):
-                                    self.handleSuccessfulPayment(capturedPaymentData: capturedPaymentData)
+                                    let eventData = ["just_for_testing": "retryPayment"]
+                                    self.handleSuccessfulPayment(capturedPaymentData: capturedPaymentData, eventData: eventData)
                                     onCompletion(.success(capturedPaymentData))
                                 case .failure(CardReaderServiceError.paymentMethodCollection(.commandCancelled(let cancellationSource))):
                                     switch cancellationSource {

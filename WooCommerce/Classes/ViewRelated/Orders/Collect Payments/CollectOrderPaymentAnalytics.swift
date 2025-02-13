@@ -9,7 +9,7 @@ protocol CollectOrderPaymentAnalyticsTracking {
 
     func trackProcessingCompletion(intent: PaymentIntent)
 
-    func trackSuccessfulPayment(capturedPaymentData: CardPresentCapturedPaymentData)
+    func trackSuccessfulPayment(capturedPaymentData: CardPresentCapturedPaymentData, eventData: [String: String])
 
     func trackPaymentFailure(with error: Error)
 
@@ -28,45 +28,67 @@ protocol CollectOrderPaymentAnalyticsTracking {
 
 final class POSCollectOrderPaymentAnalytics: CollectOrderPaymentAnalyticsTracking {
     var connectedReaderModel: String?
-    
+
     func preflightResultReceived(_ result: CardReaderPreflightResult?) {
-        
+
     }
-    
+
     func trackProcessingCompletion(intent: Yosemite.PaymentIntent) {
+
+    }
+
+    func trackSuccessfulPayment(capturedPaymentData: CardPresentCapturedPaymentData, eventData: [String: String]) {
+        // We need to map from captured eventData to POS key/values, if any
+        // Then assure that eventData is coming through from POS
+        let parsedValue = eventData["milliseconds_since_customer_interaction_started"] ?? "key_not_found"
+        ServiceLocator.analytics.track(event: WooAnalyticsEvent.PointOfSale.cardPresentCollectPaymentSuccess(
+            milliseconds_since_customer_interaction_started: parsedValue,
+            milliseconds_since_order_creation_success: "",
+            milliseconds_since_reader_ready_to_collect_payment: "",
+            milliseconds_since_card_tapped: "",
+            checkout_tap_count: ""))
         
+        /**
+         // Problem: Data is not comming through, "milliseconds_since_customer_interaction_started: key_not_found"
+         🔵 Tracked pos_card_present_collect_payment_success, properties: [checkout_tap_count: , site_url: https://indiemelon.mystagingwebsite.com,
+         milliseconds_since_card_tapped: ,
+         milliseconds_since_reader_ready_to_collect_payment: ,
+         was_ecommerce_trial: false,
+         store_id: c5bd46cc-1804-4f7b-badb-bb98c449127f,
+         milliseconds_since_customer_interaction_started: key_not_found,
+         is_wpcom_store: false,
+         blog_id: -1,
+         plan: ,
+         milliseconds_since_order_creation_success: ]
+         */
     }
-    
-    func trackSuccessfulPayment(capturedPaymentData: CardPresentCapturedPaymentData) {
-        ServiceLocator.analytics.track(event: WooAnalyticsEvent.PointOfSale.cardPresentCollectPaymentSuccess())
-    }
-    
+
     func trackPaymentFailure(with error: any Error) {
-        
+
     }
-    
+
     func trackPaymentCancelation(cancelationSource: WooAnalyticsEvent.InPersonPayments.CancellationSource) {
-        
+
     }
-    
+
     func trackEmailTapped() {
-        
+
     }
-    
+
     func trackReceiptPrintTapped() {
-        
+
     }
-    
+
     func trackReceiptPrintSuccess() {
-        
+
     }
-    
+
     func trackReceiptPrintCanceled() {
-        
+
     }
-    
+
     func trackReceiptPrintFailed(error: any Error) {
-        
+
     }
 }
 
@@ -126,7 +148,8 @@ final class CollectOrderPaymentAnalytics: CollectOrderPaymentAnalyticsTracking {
         }
     }
 
-    func trackSuccessfulPayment(capturedPaymentData: CardPresentCapturedPaymentData) {
+    func trackSuccessfulPayment(capturedPaymentData: CardPresentCapturedPaymentData, eventData: [String: String]) {
+        // On the IPP side, there's no additional eventData we want to capture, so would remain as it is
         analytics.track(event: WooAnalyticsEvent.InPersonPayments
             .collectPaymentSuccess(forGatewayID: paymentGatewayAccount?.gatewayID,
                                    countryCode: configuration.countryCode,

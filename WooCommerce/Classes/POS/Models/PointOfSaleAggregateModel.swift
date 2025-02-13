@@ -249,7 +249,15 @@ extension PointOfSaleAggregateModel {
 
     @MainActor
     private func collectPayment(for order: Order) async throws {
-        _ = try await cardPresentPaymentService.collectPayment(for: order, using: .bluetooth, channel: .pos)
+        let eventData: [String: String] = [
+            "milliseconds_since_customer_interaction_started": "1", // We should see this value tracked in the console.
+            "milliseconds_since_order_creation_success": "2",
+            "milliseconds_since_reader_ready_to_collect_payment": "3",
+            "milliseconds_since_card_tapped": "4",
+            "checkout_tap_count": "5"
+        ]
+
+        _ = try await cardPresentPaymentService.collectPayment(for: order, using: .bluetooth, channel: .pos, eventData: eventData)
     }
 
     func cancelThenCollectPayment() {

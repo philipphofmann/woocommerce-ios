@@ -43,6 +43,7 @@ final class CardPresentPaymentCollectOrderPaymentUseCaseAdaptor {
             // when the channel is POS:
             var collectOrderPaymentAnalyticsTracker: CollectOrderPaymentAnalyticsTracking?
             if channel == .pos {
+                // This is created on card reader connection, so we cannot pass event data from when we collect the payment
                 collectOrderPaymentAnalyticsTracker = POSCollectOrderPaymentAnalytics()
             } else {
                 // For IPP, it's setup internally, so need to be passed through the adaptor
@@ -71,6 +72,7 @@ final class CardPresentPaymentCollectOrderPaymentUseCaseAdaptor {
                     orderPaymentUseCase.collectPayment(
                         using: connectionMethod.discoveryMethod,
                         channel: channel,
+                        eventData: [:],
                         onFailure: { error in
                             guard let continuation = nillableContinuation else { return }
                             nillableContinuation = nil

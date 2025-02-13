@@ -38,7 +38,8 @@ protocol CardPresentPaymentFacade {
     /// - Output: publishes intermediate events on the `paymentEventPublisher` as required.
     func collectPayment(for order: Order,
                         using connectionMethod: CardReaderConnectionMethod,
-                        channel: PaymentChannel) async throws -> CardPresentPaymentResult
+                        channel: PaymentChannel,
+                        eventData: [String: String]?) async throws -> CardPresentPaymentResult
 
     /// Cancels any in-progress payment.
     func cancelPayment()

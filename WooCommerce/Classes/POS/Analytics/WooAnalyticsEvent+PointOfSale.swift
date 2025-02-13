@@ -32,9 +32,18 @@ extension WooAnalyticsEvent {
                               properties: [Key.itemsInCart: itemsInCart])
         }
 
-        static func cardPresentCollectPaymentSuccess() -> WooAnalyticsEvent {
-            WooAnalyticsEvent(statName: .collectPaymentSuccess,
-                              properties: ["some_pos_key": "some_pos_value"])
+        static func cardPresentCollectPaymentSuccess(milliseconds_since_customer_interaction_started: String,
+                                                     milliseconds_since_order_creation_success: String,
+                                                     milliseconds_since_reader_ready_to_collect_payment: String,
+                                                     milliseconds_since_card_tapped: String,
+                                                     checkout_tap_count: String) -> WooAnalyticsEvent {
+            WooAnalyticsEvent(statName: .collectPaymentSuccess, properties: [
+                "milliseconds_since_customer_interaction_started": "\(milliseconds_since_customer_interaction_started)",
+                "milliseconds_since_order_creation_success": "\(milliseconds_since_order_creation_success)",
+                "milliseconds_since_reader_ready_to_collect_payment": "\(milliseconds_since_reader_ready_to_collect_payment)",
+                "milliseconds_since_card_tapped": "\(milliseconds_since_card_tapped)",
+                "checkout_tap_count": "\(checkout_tap_count)",
+            ])
         }
     }
 }
