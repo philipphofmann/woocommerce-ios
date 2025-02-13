@@ -41,26 +41,14 @@ final class POSCollectOrderPaymentAnalytics: CollectOrderPaymentAnalyticsTrackin
         // We need to map from captured eventData to POS key/values, if any
         // Then assure that eventData is coming through from POS
         let parsedValue = eventData["milliseconds_since_customer_interaction_started"] ?? "key_not_found"
+        // Just for testing: We should see a value for milliseconds_since_customer_interaction_started, and empty values for the rest.
+        // if we see key_not_found, then properties are not being passed from POS.
         ServiceLocator.analytics.track(event: WooAnalyticsEvent.PointOfSale.cardPresentCollectPaymentSuccess(
             milliseconds_since_customer_interaction_started: parsedValue,
             milliseconds_since_order_creation_success: "",
             milliseconds_since_reader_ready_to_collect_payment: "",
             milliseconds_since_card_tapped: "",
             checkout_tap_count: ""))
-        
-        /**
-         // Problem: Data is not comming through, "milliseconds_since_customer_interaction_started: key_not_found"
-         🔵 Tracked pos_card_present_collect_payment_success, properties: [checkout_tap_count: , site_url: https://indiemelon.mystagingwebsite.com,
-         milliseconds_since_card_tapped: ,
-         milliseconds_since_reader_ready_to_collect_payment: ,
-         was_ecommerce_trial: false,
-         store_id: c5bd46cc-1804-4f7b-badb-bb98c449127f,
-         milliseconds_since_customer_interaction_started: key_not_found,
-         is_wpcom_store: false,
-         blog_id: -1,
-         plan: ,
-         milliseconds_since_order_creation_success: ]
-         */
     }
 
     func trackPaymentFailure(with error: any Error) {
