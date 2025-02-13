@@ -157,7 +157,7 @@ where BuiltInAlertProvider.AlertDetails == AlertPresenter.AlertDetails,
                 self.attemptPayment(alertProvider: paymentAlertProvider,
                                     paymentGatewayAccount: paymentGatewayAccount,
                                     channel: channel,
-                                    eventData: eventData, // Problem: eventData contains 0 elements at this point, so no properties are tracked.
+                                    eventData: eventData,
                                     onCompletion: { [weak self] result in
                     guard let self = self else { return }
                     // Inform about the collect payment state
@@ -319,6 +319,7 @@ private extension CollectOrderPaymentUseCase {
                     paymentMethodTypes: self.configuration.paymentMethods.map(\.rawValue),
                     stripeSmallestCurrencyUnitMultiplier: self.configuration.stripeSmallestCurrencyUnitMultiplier,
                     channel: channel,
+                    eventData: eventData,
                     onPreparingReader: { [weak self] in
                         self?.alertsPresenter.present(viewModel: paymentAlerts.preparingReader(onCancel: {
                             self?.cancelPayment(from: .paymentPreparingReader) {

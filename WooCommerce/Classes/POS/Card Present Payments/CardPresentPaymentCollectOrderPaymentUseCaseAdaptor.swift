@@ -31,7 +31,8 @@ final class CardPresentPaymentCollectOrderPaymentUseCaseAdaptor {
                             configuration: CardPresentPaymentsConfiguration,
                             alertsPresenter: CardPresentPaymentsAlertPresenterAdaptor,
                             paymentEventSubject: any Subject<CardPresentPaymentEvent, Never>,
-                            channel: PaymentChannel) -> Task<CardPresentPaymentAdaptedCollectOrderPaymentResult, Error> {
+                            channel: PaymentChannel,
+                            eventData: [String: String]) -> Task<CardPresentPaymentAdaptedCollectOrderPaymentResult, Error> {
         return Task {
             guard let formattedAmount = currencyFormatter.formatAmount(order.total, with: order.currency) else {
                 throw CardPresentPaymentServiceError.invalidAmount
@@ -72,7 +73,7 @@ final class CardPresentPaymentCollectOrderPaymentUseCaseAdaptor {
                     orderPaymentUseCase.collectPayment(
                         using: connectionMethod.discoveryMethod,
                         channel: channel,
-                        eventData: [:],
+                        eventData: eventData,
                         onFailure: { error in
                             guard let continuation = nillableContinuation else { return }
                             nillableContinuation = nil

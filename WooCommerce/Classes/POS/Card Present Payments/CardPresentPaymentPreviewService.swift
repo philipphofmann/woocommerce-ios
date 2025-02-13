@@ -22,7 +22,7 @@ struct CardPresentPaymentPreviewService: CardPresentPaymentFacade {
     func collectPayment(for order: Yosemite.Order,
                         using connectionMethod: CardReaderConnectionMethod,
                         channel: PaymentChannel,
-                        eventData: [String: String]?) async throws -> CardPresentPaymentResult {
+                        eventData: [String: String]) async throws -> CardPresentPaymentResult {
         .success(CardPresentPaymentTransaction(receiptURL: URL(string: "https://example.net/receipts/123")!))
     }
 

@@ -39,7 +39,7 @@ protocol CardPresentPaymentFacade {
     func collectPayment(for order: Order,
                         using connectionMethod: CardReaderConnectionMethod,
                         channel: PaymentChannel,
-                        eventData: [String: String]?) async throws -> CardPresentPaymentResult
+                        eventData: [String: String]) async throws -> CardPresentPaymentResult
 
     /// Cancels any in-progress payment.
     func cancelPayment()

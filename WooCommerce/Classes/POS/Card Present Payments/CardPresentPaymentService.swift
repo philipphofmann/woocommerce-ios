@@ -128,7 +128,10 @@ final class CardPresentPaymentService: CardPresentPaymentFacade {
     }
 
     @MainActor
-    func collectPayment(for order: Order, using connectionMethod: CardReaderConnectionMethod, channel: PaymentChannel, eventData: [String: String]?) async throws -> CardPresentPaymentResult {
+    func collectPayment(for order: Order,
+                        using connectionMethod: CardReaderConnectionMethod,
+                        channel: PaymentChannel,
+                        eventData: [String: String]) async throws -> CardPresentPaymentResult {
         paymentTask?.cancel()
 
         // What happens if `start` gets called while there's a connection ongoing but not finished?
@@ -148,7 +151,8 @@ final class CardPresentPaymentService: CardPresentPaymentFacade {
             configuration: cardPresentPaymentsConfiguration,
             alertsPresenter: paymentAlertsPresenterAdaptor,
             paymentEventSubject: paymentEventSubject,
-            channel: channel)
+            channel: channel,
+            eventData: eventData)
 
         self.paymentTask = paymentTask
 
