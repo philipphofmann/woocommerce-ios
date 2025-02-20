@@ -1,0 +1,157 @@
+#!/usr/bin/env ruby
+
+require 'json'
+require 'open3'
+require 'rexml/document'
+
+class JUnitReport
+  # @return [Array<TestSuite>]
+  attr_reader :test_suites
+
+  # @param [Array<TestSuite>] test_suites
+  def initialize(test_suites:)
+    @test_suites = test_suites
+  end
+  
+  # @return [REXML::Document]
+  def to_xml
+    doc = REXML::Document.new
+    testsuites = REXML::Element.new('testsuites')
+    testsuites.add_attributes({
+      'tests' => test_suites.sum { |ts| ts.tests.size },
+      'failures' => test_suites.sum { |ts| ts.tests.select { |t| t.result == 'Failed' }.size },
+      'skipped' => test_suites.sum { |ts| ts.tests.select { |t| t.result == 'Skipped' }.size },
+      'time' => test_suites.sum { |ts| ts.duration }
+    })
+    test_suites.each do |ts|
+      testsuites.add_element(ts.to_xml)
+    end
+    doc.add_element(testsuites)
+    doc
+  end
+
+  def to_s
+    formatter = REXML::Formatters::Pretty.new
+    formatter.compact = false
+    output = String.new
+    formatter.write(to_xml, output)
+    output
+  end
+end
+
+class TestSuite
+  attr_reader :name, :tests
+
+  def self.parse(node)
+    if node.key?('nodeType') && node['nodeType'] == 'Test Suite'
+      suite = new(
+        name: node['name'],
+        result: node['result'],
+        tests: node['children']&.flat_map { |t| TestCase.parse(t) }
+      )
+      [suite]
+    elsif node['children'].any?
+      node['children'].flat_map { |c| parse(c) }
+    else
+      []
+    end
+  end
+
+  def initialize(name:, result:, tests:)
+    @name = name
+    @result = result # One of ['Passed', 'Failed', 'Skipped', 'Expected Failure', 'unknown']  
+    @tests = tests || []
+  end
+
+  def duration
+    tests.sum { |t| t.duration }
+  end
+
+  def to_xml
+    doc = REXML::Document.new
+    testsuite = REXML::Element.new('testsuite')
+    testsuite.add_attributes({
+      'name' => name,
+      'tests' => tests.size,
+      'failures' => tests.select { |t| t.result == 'Failed' }.size,
+      'skipped' => tests.select { |t| t.result == 'Skipped' }.size,
+      'time' => duration
+    })
+    tests.each do |t|
+      testsuite.add_element(t.to_xml)
+    end
+    testsuite
+  end
+end
+
+class TestCase
+  attr_reader :name, :result, :duration, :failure_message
+
+  def self.parse(node)
+    if node.key?('nodeType') && node['nodeType'] == 'Test Case'
+      testcase = new(
+        name: node['name'],
+        result: node['result'],
+        duration: node['duration'],
+        failure_message: node['children']&.select { |c| c['nodeType'] == 'Failure Message' }&.first&.dig('name')
+      )
+      [testcase]
+    elsif node['children'].any?
+      node['children'].flat_map { |c| parse(c) }
+    else
+      []
+    end
+  end
+
+  def initialize(name:, result:, duration:, failure_message:)
+    @name = name
+    @result = result # One of ['Passed', 'Failed', 'Skipped', 'Expected Failure', 'unknown']
+    @duration = parse_duration(duration)
+    @failure_message = failure_message
+  end
+
+  def parse_duration(duration)
+    duration.to_s.gsub(',', '.').gsub(/s$/, '').to_f
+  end
+
+  def to_xml
+    testcase = REXML::Element.new('testcase')
+    testcase.add_attributes({
+      'name' => name,
+      'result' => result, 
+      'time' => duration
+    })
+    if result == 'Failed'
+      failure = REXML::Element.new('failure')
+      failure.add_attribute('message', failure_message) if failure_message
+      testcase.add_element(failure)
+    end
+    testcase
+  end
+end
+
+
+##### MAIN #####
+
+if ARGV.empty?
+  puts "Error: Please provide the path to an xcresult bundle as argument"
+  exit 1
+end
+xcresult_path = ARGV[0]
+
+stdout, stderr, status = Open3.capture3('xcrun', 'xcresulttool', 'get', 'test-results', 'tests', '--path', xcresult_path)
+unless status.success?
+  puts "Error: Failed to read xcresult bundle: #{stderr}"
+  exit 1
+end
+
+begin
+  json = JSON.parse(stdout)
+rescue JSON::ParserError => e
+  puts "Error: Failed to parse xcresult output as JSON: #{e.message}"
+  exit 1
+end
+
+test_suites = TestSuite.parse(json['testNodes'].first)
+report = JUnitReport.new(test_suites: test_suites)
+puts report.to_s
