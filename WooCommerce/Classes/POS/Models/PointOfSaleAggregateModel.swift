@@ -86,6 +86,11 @@ protocol PointOfSaleAggregateModelProtocol {
         publishCardReaderConnectionStatus()
         publishPaymentMessages()
         setupReaderReconnectionObservation()
+        print("Leaks: ✅ PointOfSaleAggregateModel INIT: \(ObjectIdentifier(self))")
+    }
+
+    deinit {
+        print("Leaks: ✅ PointOfSaleAggregateModel DEINIT: \(ObjectIdentifier(self))")
     }
 }
 

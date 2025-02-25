@@ -194,6 +194,7 @@ private extension PointOfSaleItemsController {
     func fetchItems(pageNumber: Int, appendToExistingItems: Bool = true) async throws -> Bool {
         do {
             let pagedItems = try await itemProvider.providePointOfSaleItems(pageNumber: pageNumber)
+            print("Leaks: loaded \(pagedItems.items.count) items")
             let newItems = pagedItems.items
             var allItems = appendToExistingItems ? itemsViewState.itemsStack.root.items : []
             let uniqueNewItems = newItems.filter { newItem in
