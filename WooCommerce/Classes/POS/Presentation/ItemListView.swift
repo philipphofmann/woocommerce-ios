@@ -17,7 +17,7 @@ struct ItemListView: View {
     private var isHeaderBannerDismissed: Bool = false
 
     var body: some View {
-        NavigationStack {
+//        NavigationStack {
             VStack {
                 headerView
                 switch itemListState {
@@ -35,7 +35,7 @@ struct ItemListView: View {
                 childListView(parentItem: item)
             })
             .background(Color.posSurface)
-        }
+//        }
         .accessibilityElement(children: .contain)
         .posModal(isPresented: $showSimpleProductsModal) {
             SimpleProductsOnlyInformation(isPresented: $showSimpleProductsModal)
